@@ -1,10 +1,10 @@
 package main
 
 import (
-	"gometry/geometry"
-	"gometry/linalg"
-	"gometry/vision"
 	"math"
+	"screwSort/geometry"
+	"screwSort/linalg"
+	"screwSort/vision"
 )
 
 func main() {

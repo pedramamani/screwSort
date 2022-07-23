@@ -1,8 +1,8 @@
 package linalg
 
 import (
-	"gometry/geometry"
 	"math"
+	"screwSort/geometry"
 )
 
 func calcStatisticParams(ps []*geometry.Point) (xBar, yBar, x2Bar, y2Bar, xyBar float64) {

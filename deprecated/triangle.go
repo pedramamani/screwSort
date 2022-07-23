@@ -1,10 +1,10 @@
 package deprecated
 
 import (
-	"gometry/geometry"
 	"image"
 	"image/color"
 	"math"
+	"screwSort/geometry"
 )
 
 type Triangle struct {

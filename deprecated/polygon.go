@@ -1,9 +1,9 @@
 package deprecated
 
 import (
-	"gometry/geometry"
 	"image"
 	"image/color"
+	"screwSort/geometry"
 )
 
 type Polygon struct {

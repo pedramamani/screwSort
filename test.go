@@ -1,7 +1,7 @@
 package main
 
 import (
-	"gometry/vision"
+	"screwSort/vision"
 )
 
 func main() {
