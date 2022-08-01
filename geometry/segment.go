@@ -5,113 +5,89 @@ import (
 	"image"
 	"image/color"
 	"math"
+	"screwSort/utility"
 )
 
 type Segment struct {
-	p, q, d *Point
-}
-
-func SegmentPQ(p, q *Point) *Segment {
-	return &Segment{p, q, q.Copy().Subtract(p)}
-}
-
-func SegmentXpYpXqYq(xp, yp, xq, yq float64) *Segment {
-	p := PointXY(xp, yp)
-	q := PointXY(xq, yq)
-	return SegmentPQ(p, q)
-}
-
-func (s *Segment) P() *Point {
-	return s.p
-}
-
-func (s *Segment) Q() *Point {
-	return s.q
-}
-
-func (s *Segment) D() *Point {
-	return s.d
-}
-
-func (s Segment) Copy() *Segment {
-	return SegmentPQ(s.p.Copy(), s.q.Copy())
+	p, q Point
 }
 
 func (s Segment) String() string {
-	return fmt.Sprintf("SegmentXpYpXqYq(%.2f, %.2f, %.2f, %.2f)", s.p.x, s.p.y, s.q.x, s.q.y)
+	return fmt.Sprintf("Segment{%s, %s}", s.p, s.q)
 }
 
-func (s *Segment) Center() *Point {
-	return s.p.Add(s.q).Scale(0.5)
+func SegmentPQ(p, q Point) Segment {
+	return Segment{p, q}
 }
 
-func (s *Segment) Length() float64 {
-	return s.d.R()
+func (s Segment) P() Point {
+	return s.p
 }
 
-func (s *Segment) Scale(f float64) *Segment {
-	return s.ScaleAbout(PointXY(0, 0), f)
+func (s Segment) Q() Point {
+	return s.q
 }
 
-func (s *Segment) CenterScale(f float64) *Segment {
+func (s Segment) D() Point {
+	return s.q.Subtract(s.p)
+}
+
+func (s Segment) Dx() float64 {
+	return s.q.x - s.p.x
+}
+
+func (s Segment) Dy() float64 {
+	return s.q.y - s.p.y
+}
+
+func (s Segment) Center() Point {
+	return s.p.AverageWith(s.q)
+}
+
+func (s Segment) Length() float64 {
+	return s.p.DistanceTo(s.q)
+}
+
+func (s Segment) Scale(f float64) Segment {
+	return Segment{s.p.Scale(f), s.q.Scale(f)}
+}
+
+func (s Segment) CenterScale(f float64) Segment {
 	return s.ScaleAbout(s.Center(), f)
 }
 
-func (s *Segment) PScale(f float64) *Segment {
-	return s.ScaleAbout(s.p, f)
+func (s Segment) ScaleAbout(p Point, f float64) Segment {
+	return Segment{s.p.ScaleAbout(p, f), s.q.ScaleAbout(p, f)}
 }
 
-func (s *Segment) QScale(f float64) *Segment {
-	return s.ScaleAbout(s.q, f)
+func (s Segment) Translate(x, y float64) Segment {
+	return Segment{s.p.Translate(x, y), s.q.Translate(x, y)}
 }
 
-func (s *Segment) ScaleAbout(p *Point, f float64) *Segment {
-	s.p.ScaleAbout(p, f)
-	s.q.ScaleAbout(p, f)
-	s.d.ScaleAbout(p, f)
-	return s
+func (s Segment) Rotate(a float64) Segment {
+	return Segment{s.p.Rotate(a), s.q.Rotate(a)}
 }
 
-func (s *Segment) Translate(x, y float64) *Segment {
-	s.p.Translate(x, y)
-	s.q.Translate(x, y)
-	return s
-}
-
-func (s *Segment) Rotate(a float64) *Segment {
-	return s.RotateAbout(PointXY(0, 0), a)
-}
-
-func (s *Segment) CenterRotate(a float64) *Segment {
+func (s Segment) CenterRotate(a float64) Segment {
 	return s.RotateAbout(s.Center(), a)
 }
 
-func (s *Segment) PRotate(a float64) *Segment {
-	return s.RotateAbout(s.p, a)
+func (s Segment) RotateAbout(p Point, a float64) Segment {
+	return Segment{s.p.RotateAbout(p, a), s.q.RotateAbout(p, a)}
 }
 
-func (s *Segment) QRotate(a float64) *Segment {
-	return s.RotateAbout(s.q, a)
-}
-
-func (s *Segment) RotateAbout(p *Point, a float64) *Segment {
-	s.p.RotateAbout(p, a)
-	s.q.RotateAbout(p, a)
-	s.d.RotateAbout(p, a)
-	return s
-}
-
-func (s *Segment) PerpDistanceTo(p *Point) float64 {
-	return math.Abs(s.d.Cross(p)+s.p.Cross(s.q)) / s.d.R()
+func (s Segment) PerpDistanceTo(p Point) float64 {
+	d := s.D()
+	return math.Abs(d.Cross(p)+s.p.Cross(s.q)) / d.R()
 }
 
 // SideOf returns positive if p is above s, negative if under, and 0 if collinear
-func (s *Segment) SideOf(p *Point) float64 {
-	return s.d.x * p.OrientationOf(s.p, s.q)
+func (s Segment) SideOf(p Point) float64 {
+	return s.Dx() * p.OrientationOf(s.p, s.q)
 }
 
 // IntersectionOf returns positive if s and t intersect, negative if they do not, and 0 if they touch
-func (s *Segment) IntersectionOf(t *Segment) float64 {
+func (s Segment) IntersectionOf(t Segment) float64 {
 	a := s.p.OrientationOf(t.p, t.q) * s.q.OrientationOf(t.p, t.q)
 	b := t.p.OrientationOf(s.p, s.q) * t.q.OrientationOf(s.p, s.q)
 	switch {
@@ -124,34 +100,39 @@ func (s *Segment) IntersectionOf(t *Segment) float64 {
 	}
 }
 
-func (s *Segment) IntersectionWith(t *Segment) *Point {
-	sc, tc, dc := s.p.Cross(s.q), t.p.Cross(t.q), s.d.Cross(t.d)
-	return PointXY((sc*t.d.x-tc*s.d.x)/dc, (sc*t.d.y-tc*s.d.y)/dc)
+func (s Segment) IntersectionWith(t Segment) Point {
+	sc, tc, dc := s.p.Cross(s.q), t.p.Cross(t.q), s.D().Cross(t.D())
+	return PointXY((sc*t.Dx()-tc*s.Dx())/dc, (sc*t.Dy()-tc*s.Dy())/dc)
 }
 
-func (s *Segment) AngleBetween(t *Segment) float64 {
-	return s.d.AngleBetween(t.d)
+func (s Segment) AngleBetween(t Segment) float64 {
+	return s.D().AngleBetween(t.D())
 }
 
-func (s *Segment) Draw(im *image.RGBA, c color.RGBA) *Segment {
-	m := s.d.y / s.d.x
+func (s Segment) Draw(im *image.RGBA, c color.RGBA) {
+	dx, dy := s.Dx(), s.Dy()
+	m := dy / dx
+	x0, y0 := s.p.x-0.5, s.p.y-0.5
 
 	if math.Abs(m) < 1 {
-		for x := s.p.x - 0.5; x*s.d.x < (s.q.x-0.5)*s.d.x; x += math.Copysign(1, s.d.x) {
+		n := utility.AbsInt(utility.IntRound(s.q.x-0.5) - utility.IntRound(x0))
+		for i := 0; i <= n; i++ {
+			x := math.Round(x0) + math.Copysign(float64(i), dx)
 			im.Set(
-				im.Rect.Min.X+int(math.Round(x)),
-				im.Rect.Max.Y-int(math.Round(s.p.y+0.5+(x-s.p.x)*m)),
+				utility.IntRound(x),
+				utility.IntRound(y0+(x-x0)*m),
 				c,
 			)
 		}
 	} else {
-		for y := s.p.y + 0.5; y*s.d.y < (s.q.y+0.5)*s.d.y; y += math.Copysign(1, s.d.y) {
+		n := utility.AbsInt(utility.IntRound(s.q.y-0.5) - utility.IntRound(y0))
+		for i := 0; i <= n; i++ {
+			y := math.Round(y0) + math.Copysign(float64(i), dy)
 			im.Set(
-				im.Rect.Min.X+int(math.Round(s.p.x-0.5+(y-s.p.y)/m)),
-				im.Rect.Max.Y-int(math.Round(y)),
+				utility.IntRound(x0+(y-y0)/m),
+				utility.IntRound(y),
 				c,
 			)
 		}
 	}
-	return s
 }

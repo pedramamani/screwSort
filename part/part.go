@@ -1,34 +1,25 @@
-package main
+package part
 
 import (
-	"errors"
-	"fmt"
 	"image"
-	"image/png"
-	"os"
+	"path"
+	"runtime"
+	"screwSort/vision"
 )
 
-type Object struct {
-	width, height float64
-	name          string
-	id            string
+type Part struct {
+	dx, dy float64
+	name   string
+	id     string
 }
 
-func getImage(o Object) image.Image {
-	fn := o.id + ".png"
-	if _, e := os.Stat(fn); e == nil {
-		f, _ := os.Open(fn)
-		im, _ := png.Decode(f)
-		f.Close()
-		return im
-	} else if errors.Is(e, os.ErrNotExist) {
-		panic(fmt.Sprintf("File %s does not exist", fn))
-	} else {
-		panic(fmt.Sprintf("Cannot access file %s", fn))
-	}
+func (p Part) Mask() image.Image {
+	_, fn, _, _ := runtime.Caller(1)
+	fp := path.Join(path.Dir(fn), "masks", p.id+".png")
+	return vision.OpenPng(fp)
 }
 
-var objects = []Object{
+var parts = []Part{
 	{3.8, 10, "M2 8mm Socket Head Screw", "91292A832"},
 	{7, 18, "M4 14mm Socket Head Screw", "91292A038"},
 	{6.86, 20.04, "8-32 5/8in Socket Head Screw", "92196A196"},

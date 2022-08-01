@@ -3,125 +3,100 @@ package vision
 import (
 	"image"
 	"image/color"
+	"screwSort/geometry"
+	"screwSort/utility"
 )
 
-const B uint8 = 0
-const W uint8 = 255
-const N uint8 = 8
+const (
+	b uint8 = 0
+	w uint8 = 255
+)
 
 func Threshold(im *image.Gray, t uint8) *image.Gray {
-	imOut := image.NewGray(im.Rect)
-	for y := im.Rect.Min.Y; y < im.Rect.Max.Y; y++ {
-		for x := im.Rect.Min.X; x < im.Rect.Max.X; x++ {
+	out := image.NewGray(im.Rect)
+	for y := 0; y < im.Rect.Dy(); y++ {
+		for x := 0; x < im.Rect.Dx(); x++ {
 			v := im.GrayAt(x, y).Y
 			if v >= t {
-				v = W
+				out.Set(x, y, color.Gray{Y: w})
 			} else {
-				v = B
+				out.Set(x, y, color.Gray{Y: b})
 			}
-			imOut.Set(x, y, color.Gray{Y: v})
 		}
 	}
-	return imOut
+	return out
 }
 
 func InverseThreshold(im *image.Gray, t uint8) *image.Gray {
-	imOut := image.NewGray(im.Rect)
+	out := image.NewGray(im.Rect)
 	for y := im.Rect.Min.Y; y < im.Rect.Max.Y; y++ {
 		for x := im.Rect.Min.X; x < im.Rect.Max.X; x++ {
 			v := im.GrayAt(x, y).Y
 			if v <= t {
-				v = W
+				out.Set(x, y, color.Gray{Y: w})
 			} else {
-				v = B
+				out.Set(x, y, color.Gray{Y: b})
 			}
-			imOut.Set(x, y, color.Gray{Y: v})
 		}
 	}
-	return imOut
+	return out
 }
 
 func Invert(im *image.Gray) *image.Gray {
-	imOut := image.NewGray(im.Rect)
-	for y := im.Rect.Min.Y; y < im.Rect.Max.Y; y++ {
-		for x := im.Rect.Min.X; x < im.Rect.Max.X; x++ {
-			v := im.GrayAt(x, y).Y
-			imOut.Set(x, y, color.Gray{Y: W - v})
-		}
-	}
-	return imOut
-}
-
-func ToGray(im image.Image) *image.Gray {
-	imOut := image.NewGray(im.Bounds())
-	for y := im.Bounds().Min.Y; y < im.Bounds().Max.Y; y++ {
-		for x := im.Bounds().Min.X; x < im.Bounds().Max.X; x++ {
-			imOut.Set(x, y, im.At(x, y))
-		}
-	}
-	return imOut
-}
-
-func ToRgba(im image.Image) *image.RGBA {
-	imOut := image.NewRGBA(im.Bounds())
-	for y := im.Bounds().Min.Y; y < im.Bounds().Max.Y; y++ {
-		for x := im.Bounds().Min.X; x < im.Bounds().Max.X; x++ {
-			imOut.Set(x, y, im.At(x, y))
-		}
-	}
-	return imOut
-}
-
-func UpscaleRgba(im *image.RGBA, f int) *image.RGBA {
-	imOut := image.NewRGBA(image.Rectangle{Max: image.Point{X: f * im.Rect.Max.X, Y: f * im.Rect.Max.Y}})
+	out := image.NewGray(im.Rect)
 	for y := 0; y < im.Rect.Dy(); y++ {
 		for x := 0; x < im.Rect.Dx(); x++ {
-			c := im.At(x, y)
-			for iy := 0; iy < f; iy++ {
-				for ix := 0; ix < f; ix++ {
-					imOut.Set(f*x+ix, f*y+iy, c)
-				}
-			}
+			v := im.GrayAt(x, y).Y
+			out.Set(x, y, color.Gray{Y: w - v})
 		}
 	}
-	return imOut
+	return out
 }
 
-func CropSquare(im *image.Gray) *image.Gray {
-	w := im.Rect.Max.X - im.Rect.Min.X
-	h := im.Rect.Max.Y - im.Rect.Min.Y
-	s := 2 * (minInt(w, h)/2 - 1)
+func ScaleNearestNeighbor(im *image.Gray, f float64) *image.Gray {
+	out := BlackGray(utility.IntRound(f*float64(im.Rect.Dx())), utility.IntRound(f*float64(im.Rect.Dy())))
+	rx, ry := float64(im.Rect.Dx())/float64(out.Rect.Dx()), float64(im.Rect.Dy())/float64(out.Rect.Dy())
+	for y := 0; y < out.Rect.Dy(); y++ {
+		for x := 0; x < out.Rect.Dx(); x++ {
+			out.Set(x, y, im.At(utility.IntRound(rx*float64(x)+(rx-1)/2), utility.IntRound(ry*float64(y)+(ry-1)/2)))
+		}
+	}
+	return out
+}
 
-	imOut := image.NewGray(image.Rectangle{
+func Crop(im *image.Gray, pMin, pMax image.Point) *image.Gray {
+	if pMin.X >= pMax.X || pMin.Y >= pMax.Y {
+		panic("failed to satisfy pMin.X < pMax.X, pMin.Y < pMax.Y")
+	}
+	out := image.NewGray(image.Rectangle{
 		Min: image.Point{},
-		Max: image.Point{X: s, Y: s},
+		Max: image.Point{X: pMax.X - pMin.X + 1, Y: pMax.Y - pMin.Y + 1},
 	})
-
-	for y := 0; y < s; y++ {
-		for x := 0; x < s; x++ {
-			imOut.Set(x, y, im.GrayAt(w/2-s/2+x, h/2-s/2+y))
+	for y := 0; y < out.Rect.Dy(); y++ {
+		for x := 0; x < out.Rect.Dx(); x++ {
+			out.Set(x, y, im.GrayAt(pMin.X+x, pMin.Y+y))
 		}
 	}
-	return imOut
+	return out
 }
 
-func Erode(im *image.Gray, s uint8) *image.Gray {
-	if s > 7 {
-		panic("failed to satisfy s ∈ {0, ..., 7}")
+func Erode(im *image.Gray, strength uint8) *image.Gray {
+	if strength > 7 {
+		panic("failed to satisfy strength ∈ {0, ..., 7}")
 	}
-	imOut := image.NewGray(im.Rect)
+	out := image.NewGray(im.Rect)
 
 	for y := im.Rect.Min.Y + 1; y < im.Rect.Max.Y-1; y++ {
 		for x := im.Rect.Min.X + 1; x < im.Rect.Max.X-1; x++ {
 			v := im.GrayAt(x, y).Y
 			neighborCount := -(im.GrayAt(x-1, y-1).Y + im.GrayAt(x, y-1).Y + im.GrayAt(x+1, y-1).Y + im.GrayAt(x+1, y).Y + im.GrayAt(x+1, y+1).Y + im.GrayAt(x, y+1).Y + im.GrayAt(x-1, y+1).Y + im.GrayAt(x-1, y).Y)
-			if neighborCount <= s {
-				v = B
+			if neighborCount <= strength {
+				v = b
 			}
-			imOut.Set(x, y, color.Gray{Y: v})
+			out.Set(x, y, color.Gray{Y: v})
 		}
 	}
-	return imOut
+	return out
 }
 
 func ErodeN(im *image.Gray, strength uint8, n int) *image.Gray {
@@ -135,19 +110,19 @@ func Dilate(im *image.Gray, strength uint8) *image.Gray {
 	if strength > 7 {
 		panic("failed to satisfy strength ∈ {0, ..., 7}")
 	}
-	imOut := image.NewGray(im.Rect)
+	out := image.NewGray(im.Rect)
 
 	for y := im.Rect.Min.Y + 1; y < im.Rect.Max.Y-1; y++ {
 		for x := im.Rect.Min.X + 1; x < im.Rect.Max.X-1; x++ {
 			v := im.GrayAt(x, y).Y
 			neighborCount := -(im.GrayAt(x-1, y-1).Y + im.GrayAt(x, y-1).Y + im.GrayAt(x+1, y-1).Y + im.GrayAt(x+1, y).Y + im.GrayAt(x+1, y+1).Y + im.GrayAt(x, y+1).Y + im.GrayAt(x-1, y+1).Y + im.GrayAt(x-1, y).Y)
-			if neighborCount >= N-strength {
-				v = W
+			if neighborCount >= 8-strength {
+				v = w
 			}
-			imOut.Set(x, y, color.Gray{Y: v})
+			out.Set(x, y, color.Gray{Y: v})
 		}
 	}
-	return imOut
+	return out
 }
 
 func DilateN(im *image.Gray, strength uint8, n int) *image.Gray {
@@ -158,18 +133,28 @@ func DilateN(im *image.Gray, strength uint8, n int) *image.Gray {
 }
 
 func FindEdge(im *image.Gray) *image.Gray {
-	imOut := image.NewGray(im.Rect)
-
-	for y := im.Rect.Min.Y + 1; y < im.Rect.Max.Y-1; y++ {
-		for x := im.Rect.Min.X + 1; x < im.Rect.Max.X-1; x++ {
+	out := image.NewGray(im.Rect)
+	for y := 1; y < im.Rect.Dy()-1; y++ {
+		for x := 1; x < im.Rect.Dx()-1; x++ {
 			neighborCount := -(im.GrayAt(x-1, y-1).Y + im.GrayAt(x, y-1).Y + im.GrayAt(x+1, y-1).Y + im.GrayAt(x+1, y).Y + im.GrayAt(x+1, y+1).Y + im.GrayAt(x, y+1).Y + im.GrayAt(x-1, y+1).Y + im.GrayAt(x-1, y).Y)
 			if 5 <= neighborCount && neighborCount <= 7 {
-				imOut.Set(x, y, color.Gray{Y: W})
+				out.Set(x, y, color.Gray{Y: w})
 			} else {
-				imOut.Set(x, y, color.Gray{Y: B})
+				out.Set(x, y, color.Gray{Y: b})
 			}
 
 		}
 	}
-	return imOut
+	return out
+}
+
+func NonzeroPoints(im *image.Gray) (ps []geometry.Point) {
+	for y := 0; y < im.Rect.Dy(); y++ {
+		for x := 0; x < im.Rect.Dx(); x++ {
+			if im.GrayAt(x, y).Y != b {
+				ps = append(ps, geometry.PointImage(x, y))
+			}
+		}
+	}
+	return ps
 }
