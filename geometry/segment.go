@@ -110,6 +110,12 @@ func (s Segment) AngleBetween(t Segment) float64 {
 }
 
 func (s Segment) Draw(im *image.RGBA, c color.RGBA) {
+	if math.IsNaN(s.Length()) {
+		//panic("failed to satisfy !math.IsNaN(s.Length())")
+		fmt.Println("could not draw", s.String())
+		return
+	}
+
 	dx, dy := s.Dx(), s.Dy()
 	m := dy / dx
 	x0, y0 := s.p.x-0.5, s.p.y-0.5

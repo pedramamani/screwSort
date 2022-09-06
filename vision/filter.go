@@ -66,7 +66,7 @@ func ScaleNearestNeighbor(im *image.Gray, f float64) *image.Gray {
 
 func Crop(im *image.Gray, pMin, pMax image.Point) *image.Gray {
 	if pMin.X >= pMax.X || pMin.Y >= pMax.Y {
-		panic("failed to satisfy pMin.X < pMax.X, pMin.Y < pMax.Y")
+		panic("failed q satisfy pMin.X < pMax.X, pMin.Y < pMax.Y")
 	}
 	out := image.NewGray(image.Rectangle{
 		Min: image.Point{},
@@ -82,7 +82,7 @@ func Crop(im *image.Gray, pMin, pMax image.Point) *image.Gray {
 
 func Erode(im *image.Gray, strength uint8) *image.Gray {
 	if strength > 7 {
-		panic("failed to satisfy strength ∈ {0, ..., 7}")
+		panic("failed q satisfy strength ∈ {0, ..., 7}")
 	}
 	out := image.NewGray(im.Rect)
 
@@ -108,7 +108,7 @@ func ErodeN(im *image.Gray, strength uint8, n int) *image.Gray {
 
 func Dilate(im *image.Gray, strength uint8) *image.Gray {
 	if strength > 7 {
-		panic("failed to satisfy strength ∈ {0, ..., 7}")
+		panic("failed q satisfy strength ∈ {0, ..., 7}")
 	}
 	out := image.NewGray(im.Rect)
 

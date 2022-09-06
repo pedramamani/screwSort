@@ -73,3 +73,16 @@ func ToRgba(im image.Image) *image.RGBA {
 	}
 	return out
 }
+
+func ApplyAlpha(im *image.RGBA, a float64) *image.RGBA {
+	for y := 0; y < im.Bounds().Dy(); y++ {
+		for x := 0; x < im.Bounds().Dx(); x++ {
+			c := im.RGBAAt(x, y)
+			c.R = uint8(float64(c.R) * a)
+			c.G = uint8(float64(c.G) * a)
+			c.B = uint8(float64(c.B) * a)
+			im.Set(x, y, c)
+		}
+	}
+	return im
+}

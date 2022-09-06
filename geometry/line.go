@@ -27,6 +27,14 @@ func LineAC(a, c float64) Line {
 	return Line{a, math.Sqrt(1 - a*a), c}
 }
 
+func LineABC(a, b, c float64) Line {
+	d := math.Hypot(a, b)
+	if b < 0 {
+		a, b, c = -a, -b, -c
+	}
+	return Line{a / d, b / d, c / d}
+}
+
 func LinePTheta(p Point, theta float64) Line {
 	m := math.Tan(theta)
 	y0 := p.y - m*p.x
@@ -78,8 +86,15 @@ func (l Line) SideOf(p Point) float64 {
 	return l.a*p.x + l.b*p.y + l.c
 }
 
+func (l Line) AngleBetween(o Line) float64 {
+	return math.Abs(math.Atan(l.M()) - math.Atan(o.M()))
+}
+
 func (l Line) IntersectionWith(o Line) Point {
 	d := l.a*o.b - l.b*o.a
+	if d == 0 { // todo: handle this case properly
+		fmt.Println("parallel lines", l.String(), o.String(), "do not intersect")
+	}
 	return PointXY((l.b*o.c-l.c*o.b)/d, (l.c*o.a-l.a*o.c)/d)
 }
 
