@@ -5,9 +5,9 @@ import (
 )
 
 func main() {
-	fn := "assets/photos/head.png"
+	fn := "assets/data/single.png"
 	im := vision.ToGray(vision.OpenPng(fn))
-	im = vision.InverseThreshold(im, 60)
+	im = vision.InverseThreshold(im, 150)
 	out := vision.ToRgba(im)
-	vision.SavePng(out, "assets/out.png")
+	vision.SavePng(out, "assets/temp/out.png")
 }

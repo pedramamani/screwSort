@@ -1,0 +1,28 @@
+baseline.png
+- M2 8mm Socket Head Screw
+
+head.png
+- M5 12mm Button Head Screw
+- M5 12mm Socket Head Screw
+- M5 16mm Flat Head Screw
+
+length.png
+- M5 16mm Socket Head Screw
+- M5 20mm Socket Head Screw
+
+nut.png
+- M3 Nut
+- M3 Nyloc Nut
+- M4 Nut
+
+thread.png
+- M4 14mm Socket Head Screw
+- 8-32 5/8in Socket Head Screw
+
+washer.png
+- M4 Washer
+- M5 Washer
+- M6 Washer
+
+single.png
+- M3 12mm Flat Head Screw

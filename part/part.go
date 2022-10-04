@@ -7,12 +7,14 @@ import (
 	"screwSort/vision"
 )
 
+// Part represents a McMaster-Carr part with its name, id, and the dimensions of its cross-section
 type Part struct {
 	dx, dy float64
 	name   string
 	id     string
 }
 
+// Mask loads and returns the PNG mask of the Part
 func (p Part) Mask() image.Image {
 	_, fn, _, _ := runtime.Caller(1)
 	fp := path.Join(path.Dir(fn), "masks", p.id+".png")

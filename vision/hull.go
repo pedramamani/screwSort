@@ -10,8 +10,7 @@ import (
 )
 
 const (
-	thresholdArea   = 200.
-	minimumDistance = 25.
+	thresholdArea = 100.
 )
 
 type Hull struct {
@@ -25,7 +24,6 @@ func HullPs(ps []geometry.Point) Hull {
 	for i, p := range ps {
 		a += p.AngleTo(ps[(i+1)%n])
 	}
-	//fmt.Println(a)
 	return Hull{ps, true}
 }
 
@@ -137,13 +135,13 @@ func (h Hull) Convex() Hull {
 	return HullPs(qs)
 }
 
-func (h Hull) Simplify(threshold float64) Hull {
+func (h Hull) Simplify(errorThreshold, lineThreshold float64) Hull {
 	var ls []geometry.Line
 	var lp geometry.Line
 	ip := 0
 	for i := 2; i < len(h.ps); i++ {
 		f := fit.OrthogonalFit(h.ps[ip:i])
-		if f.MeanError() > 1.4 {
+		if f.MeanError() > errorThreshold {
 			ls = append(ls, lp)
 			ip = i - 2
 			continue
@@ -158,10 +156,10 @@ func (h Hull) Simplify(threshold float64) Hull {
 		ln := ls[(i+1)%n]
 		p := l.IntersectionWith(ln)
 		np := len(ps) - 1
-		if np >= 0 && ps[np].DistanceTo(p) < threshold*minimumDistance {
+		if np >= 0 && ps[np].DistanceTo(p) < lineThreshold {
 			ps[np] = ls[(i-1)%n].IntersectionWith(ln)
 			ls[i] = ls[(i-1)%n]
-		} else if l.AngleBetween(ln) > math.Pi/6 {
+		} else if l.AngleBetween(ln) > math.Pi/10 {
 			ps = append(ps, p)
 		}
 	}
@@ -261,7 +259,7 @@ func SuperHulls(im *image.Gray, vm float64) []Hull {
 				p = geometry.PointXY(float64(x+1)+s*gx, float64(y+1)+s*gy)
 			}
 
-			switch { // todo: add 1px black padding q fix edge issues
+			switch { // todo: add 1px black padding to fix edge issues
 			case mTL == w && mTR == b && mBL == w && mBR == w:
 				links[image.Point{X: x + 1, Y: y + 1}] = Link{image.Point{X: x, Y: y}, p}
 			case mTL == b && mTR == w && mBL == w && mBR == w:
@@ -345,7 +343,7 @@ func getUnitSegment(l geometry.Line) (bool, geometry.Segment) {
 	return true, geometry.SegmentPQ(ps[0], ps[1])
 }
 
-/* todo: implement a way q compare two hulls
+/* todo: implement a way to compare two hulls
 https://en.wikipedia.org/wiki/Fr%C3%A9chet_distance
 https://en.wikipedia.org/wiki/Dynamic_time_warping
 

@@ -1,5 +1,6 @@
 package utility
 
+// Permutations returns all possible permutations of the integers 0 through n-1 (inclusive)
 func Permutations(n int) [][]int {
 	var ps [][]int
 	var permuteUpTo func([]int, int)
@@ -23,6 +24,7 @@ func Permutations(n int) [][]int {
 	return ps
 }
 
+// Range returns the ascending list of integers 0 through n-1 (inclusive)
 func Range(n int) []int {
 	xs := make([]int, n)
 	for i := range xs {

@@ -6,32 +6,39 @@ import (
 	"screwSort/utility"
 )
 
+// Fit describes a 2D fit line along with errors associated with each point
 type Fit struct {
 	line   geometry.Line
 	errors []float64
 }
 
-func FitLErrors(l geometry.Line, errors []float64) Fit {
-	return Fit{l, errors}
+// FitLineErrors constructs a new Fit from the line and the errors
+func FitLineErrors(line geometry.Line, errors []float64) Fit {
+	return Fit{line, errors}
 
 }
 
+// Line returns the Line of the Fit
 func (f Fit) Line() geometry.Line {
 	return f.line
 }
 
+// Errors returns the errors of the Fit
 func (f Fit) Errors() []float64 {
 	return f.errors
 }
 
+// MeanError returns the mean error of the Fit
 func (f Fit) MeanError() float64 {
 	return utility.Mean(f.errors...)
 }
 
+// MaxError returns the maximum error of the Fit
 func (f Fit) MaxError() float64 {
 	return utility.Max(f.errors...)
 }
 
+// Moments returns the central moments of the points up to order 2
 func Moments(ps []geometry.Point) (xBar, yBar, xyBar, x2Bar, y2Bar float64) {
 	for _, p := range ps {
 		xBar += p.X()
@@ -49,6 +56,7 @@ func Moments(ps []geometry.Point) (xBar, yBar, xyBar, x2Bar, y2Bar float64) {
 	return
 }
 
+// LinearFit returns a linear Fit that minimizes the y residual of the points
 func LinearFit(ps []geometry.Point) Fit {
 	xBar, yBar, xyBar, x2Bar, _ := Moments(ps)
 	m := (xyBar - xBar*yBar) / (x2Bar - xBar*xBar)
@@ -59,9 +67,10 @@ func LinearFit(ps []geometry.Point) Fit {
 	for i, p := range ps {
 		es[i] = math.Abs(p.Y() - l.Y(p.X()))
 	}
-	return FitLErrors(l, es)
+	return FitLineErrors(l, es)
 }
 
+// OrthogonalFit returns an orthogonal Fit that minimizes the perpendicular distance to the points
 func OrthogonalFit(ps []geometry.Point) Fit {
 	xBar, yBar, xyBar, x2Bar, y2Bar := Moments(ps)
 	covXY := xyBar - xBar*yBar
@@ -84,5 +93,5 @@ func OrthogonalFit(ps []geometry.Point) Fit {
 	for i, p := range ps {
 		es[i] = l.PerpDistanceTo(p)
 	}
-	return FitLErrors(l, es)
+	return FitLineErrors(l, es)
 }
